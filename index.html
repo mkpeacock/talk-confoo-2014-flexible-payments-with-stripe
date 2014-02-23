@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Flexible Payments with Stripe</title>
+
+		<meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+		<meta name="author" content="Hakim El Hattab">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+		<script>
+			document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+				<section>
+					<img src="images/logo.png" border="0px;" height="150px;">
+					<h1>Flexible Payments with Stripe</h1>
+					<p>
+						<small>Michael Peacock</small>
+					</p>
+				</section>
+				<section>
+					<h2>@michaelpeacock</h2>
+					<ul>
+						<li>PHP Developer</li>
+						<li>Technical author</li>
+						<li>Occasional conference speaker</li>
+					</ul>
+				</section>
+
+				<section>
+					<section>
+						<img src="images/logo.png" border="0px;">
+					</section>
+					<section>
+						<h2>Costs</h2>
+						<img src="images/pricing.png" width="" height="">
+					</section>
+					<section>
+						<h2>Payment strategies</h2>
+						<ul>
+							<li class="fragment">One-off payments</li>
+							<li class="fragment">On-demand payments</li>
+							<li class="fragment">Subscription payments</li>
+							<li class="fragment">Metered billing</li>
+							<li class="fragment">Seat/quantity based pricing</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Other strategies</h2>
+						<ul>
+							<li class="fragment">Stripe Connect</li>
+							<li class="fragment">Transfers</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Minimum workflow</h2>
+						<ul>
+							<li class="fragment">Customer provides card details</li>
+							<li class="fragment">Stripe returns a token</li>
+							<li class="fragment">Use the token to charge a card or save a customer</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Installation</h2>
+					</section>
+					<section>
+						<h2>Composer.json</h2>
+						<pre><code contenteditable>"stripe/stripe-php": "v1.11.0",</code></pre>
+					</section>
+					<section>
+						<h2>Javascript</h2>
+
+						<pre><code contenteditable>&lt;script type="text/javascript" src="https://js.stripe.com/v2/"></script></code></pre>
+
+						<pre><code contenteditable>'stripe': '//js.stripe.com/v2/?1',</code></pre>
+					</section>
+					<section>
+						<h2>Set the API key</h2>
+						<pre><code contenteditable>\Stripe::setApiKey($api_secret);</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Getting a token</h2>
+					</section>
+					<section>
+						<h2>Stripe Checkout</h2>
+						<pre><code contenteditable>&lt;form action="/charge" method="POST">
+  &lt;script
+    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+    data-key="{{ stripe_publishable_key }}"
+    data-image="/square-logo.png"
+    data-currency="CAD"
+    data-name="Confoo"
+    data-description="1 ticket ($845.00)"
+    data-amount="84500">
+  &lt;/script>
+&lt;/form></code></pre>
+					</section>
+					<section>
+						<h2>Stripe.js</h2>
+
+						<pre><code contenteditable>Stripe.card.createToken({
+    number: $('.card-number').val(),
+    cvc: $('.card-cvc').val(),
+    exp_month: $('.card-expiry-month').val(),
+    exp_year: $('.card-expiry-year').val()
+}, stripeResponseHandler);</code></pre>
+
+					</section>
+
+					<section>
+						<h2>ResponseHandler</h2>
+						<pre><code contenteditable>function stripeResponseHandler(status, response) {
+    if (response.error) {
+        // show the errors on the form
+        $(".payment-errors").text(response.error.message);
+    } else {
+        var form$ = $("#payment-form");
+        // token contains id, last4, and card type
+        var token = response['id'];
+        // insert the token into the form so it gets submitted to the server
+        form$.append("<input type='hidden' name='stripeToken' value='" + token + "'/>");
+        // and submit
+        form$.get(0).submit();
+    }
+}</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>One-off payment</h2>
+					</section>
+					<section>
+						<pre><code contenteditable>try {
+    $charge = \Stripe_Charge::create(
+        [
+            'amount' =>  84500 // amount in cents
+            'currency' => 'CAD',
+            'card' => $_POST['stripeToken'],
+            'description' => 'One off payment'
+        ]
+    );
+} catch (\Exception $e) {
+    // error processing payment
+}</code></pre>
+					</section>
+
+					<section>
+						<pre><code contenteditable>\Stripe_CardError
+\Stripe_ApiConnectionError
+\Stripe_InvalidRequestError
+\Stripe_ApiError
+</code></pre>
+					</section>
+
+				</section>
+
+				<section>
+
+					<section>
+						<h2>On-demand payments</h2>
+					</section>
+
+					<section>
+						<h2>Create a customer</h2>
+						<pre><code contenteditable>$stripe_customer = \Stripe_Customer::create([
+	"card" => $_POST['stripeToken'],
+	"email" => 'customer@domain.com'
+]);</code></pre>
+					</section>
+
+					<section>
+						<h2>Associate the id</h2>
+						<pre><code contenteditable>$user->setStripeCustomerId($stripe_customer->id);</code></pre>
+					</section>
+
+					<section>
+						<h2>Charge the customer</h2>
+						<pre><code contenteditable>$charge = \Stripe_Charge::create([
+	'customer' => $user->getStripeCustomerId(),
+	'amount'   => 84500,
+	'currency' => 'cad'
+]);</code></pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>Subscription payments</h2>
+					</section>
+
+					<section>
+						<h2>Create a plan</h2>
+						<pre><code contenteditable>\Stripe_Plan::create([
+	"amount" => 1000,
+	"interval" => "month",
+	"name" => "Friend of Confoo",
+	"currency" => "cad",
+	"id" => "friend"
+]);</code></pre>
+					</section>
+
+					<section>
+						<h2>Subscribe a customer to the plan</h2>
+						<pre><code contenteditable>$customer = \Stripe_Customer::create([
+	"card" => $_POST['stripeToken'],
+	"plan" => "friend",
+	"email" => "customer@mydomain.com"
+]);</code></pre>
+					</section>
+
+					<section>
+						<h2>Change plans</h2>
+						<pre><code contenteditable>$customer = \Stripe_Customer::retrieve($stripe_customer_id);
+
+$customer->updateSubscription([
+	'plan' => 'proplan',
+	'prorate' => true
+]);</code></pre>
+					</section>
+
+					<section>
+						<h2>Trial periods</h2>
+						<pre><code contenteditable>\Stripe_Plan::create([
+	"amount" => 1000,
+	"interval" => "month",
+	"name" => "Friend of Confoo - with trial",
+	"currency" => "cad",
+	"id" => "friendtrial",
+	"trial_period_days" => 30
+]);</code></pre>
+					</section>
+
+					<section>
+						<h2>Discounts</h2>
+						<pre><code contenteditable>$coupon = \Stripe_Coupon::create([
+	"percent_off" => 10,
+	"duration" => "duration",
+	"max_redemptions" => 10
+	"currency" => "cad",
+]);
+
+$customer = \Stripe_Customer::retrieve($stripe_customer_id);
+$customer->coupon = $coupon->id;
+$customer->save();</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Metered billing</h2>
+					</section>
+
+					<section>
+						<pre><code contenteditable>$additional_cost = \Stripe_InvoiceItem::create([
+	"customer" => $user->getStripeCustomerId(),
+	"amount" => 500,
+	"currency" => "cad",
+	"description" => "Ad-hoc services for this month"
+]);</code></pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>Seat / Quantity based pricing</h2>
+					</section>
+
+					<section>
+						<pre><code contenteditable>\Stripe_Plan::create([
+	"amount" => 500,
+	"interval" => "month",
+	"name" => "Per user pricing plan",
+	"currency" => "cad",
+	"id" => "ppu"
+]);</code></pre>
+					</section>
+
+					<section>
+						<h2>Subscribe a customer to the plan</h2>
+						<pre><code contenteditable>$customer = \Stripe_Customer::create([
+	"card" => $_POST['stripeToken'],
+	"plan" => "ppu",
+	"quantity" => 5,
+	"email" => "customer@mydomain.com"
+]);</code></pre>
+					</section>
+
+					<section>
+
+						<pre><code contenteditable>$customer = \Stripe_Customer::retrieve($stripe_customer_id);
+$plan = $customer->subscription->plan->id;
+$new_quantity = $customer->subscription->quantity + 1;
+
+$customer->updateSubscription([
+	'quantity' => $new_quantity
+]);</code></pre>
+					</section>
+
+				</section>
+
+				<section>
+					<section>
+						<h2>Stripe Connect</h2>
+
+						<pre><code contenteditable>&lt;a href="https://connect.stripe.com/oauth/authorize?response_type=code&amp;client_id={{ stripe_connect_client_id }}">Connect with Stripe&lt;/a></code></pre>
+					</section>
+
+					<section>
+
+					</section>
+
+					<section>
+						<pre><code contenteditable>$post_data = [
+    'client_id' => urlencode($stripe_connect_client_id),
+	'client_secret' => urlencode($stripe_connect_client_secret),
+	'code' => urlencode($_GET['code']),
+	'grant_type' => urlencode('authorization_code')
+];
+$post_fields = "";
+foreach($post_data as $key => $value) {
+	$post_fields .= $key . '=' . $value . '&';
+}
+rtrim($post_fields, '&');
+
+$ch = curl_init();
+curl_setopt($ch,CURLOPT_URL, 'https://connect.stripe.com/oauth/token');
+curl_setopt($ch,CURLOPT_POST, count($post_data));
+curl_setopt($ch,CURLOPT_POSTFIELDS, $post_fields);
+$result = curl_exec($ch);
+curl_close($ch);
+						</code></pre>
+					</section>
+
+					<section>
+						<pre><code contenteditable>$stripe_data = json_decode($result, true);
+$customer_publishable_key = $stripe_data['stripe_publishable_key'];
+$customer_stripe_user_id = $stripe_data['stripe_user_id'];
+$customer_stripe_refresh_token = $stripe_data['refresh_token'];
+$customer_stripe_access_token = $stripe_data['access_token']
+</code></pre>
+					</section>
+
+					<section>
+						<h2>Charges</h2>
+						<ul>
+							<li>Use <strong>your customers</strong> publishable key</li>
+							<li>Use <strong>your customers</strong> access token in place of the API key</li>
+						</ul>
+
+						<pre><code contenteditable>$charge = \Stripe_Charge::create([
+	"amount" => 1000,
+	"currency" => "cad",
+	"card" => $token,
+	"description" => "Purchase",
+],
+ $customer_stripe_access_token // users stripe access token in place of API key
+);</code></pre>
+					</section>
+
+					<section>
+						<h2>Shared customers</h2>
+						<ul>
+							<li>Use <strong>your</strong> publishable key</li>
+							<li>Use <strong>your customers</strong> access token in place of the API key</li>
+						</ul>
+					</section>
+
+					<section>
+						<h2>Get a token for a shared customer to charge</h2>
+						<pre><code contenteditable>$token = \Stripe_Token::create(
+  ["customer" => $customer_id],
+  $customer_stripe_access_token // users stripe access token in place of API key
+);</code></pre>
+<h2>Charge the token</h2>
+						<pre><code contenteditable>$charge = Stripe_Charge::create([
+	"amount" => 1000,
+	"currency" => "cad",
+	"card" => $token->id,
+	"description" => "Payment"]
+);</code></pre>
+					</section>
+
+					<section>
+						<h2>Transaction fees</h2>
+						<pre><code contenteditable>"application_fee" => 100</code></pre>
+						<pre><code contenteditable>"application_fee_percent" => 10</code></pre>
+					</section>
+				</section>
+
+				<section>
+					<section>
+						<h2>Transfers</h2>
+						<pre><code contenteditable>Stripe.bankAccount.createToken({
+    country: $('.country').val(),
+    routingNumber: $('.routing-number').val(),
+    accountNumber: $('.account-number').val(),
+}, stripeResponseHandler);</code></pre>
+					</section>
+
+					<section>
+
+						<pre><code contenteditable>$recipient = \Stripe_Recipient::create([
+		"name" => "Michael Peacock",
+		"type" => "individual",
+		"bank_account" => $token,
+		"email" => "me@domain.com"
+	]);</code></pre>
+
+						<pre><code contenteditable>$transfer = Stripe_Transfer::create([
+		"amount" => 1000,
+		"currency" => "cad",
+		"recipient" => $recipient->id,
+		"statement_descriptor" => "Commission for referrals"
+	]);</code></pre>
+
+					</section>
+				</section>
+
+				<section>
+					<h2>Testing</h2>
+					<ul>
+						<li>Use test publisable key</li>
+						<li>Use test secret</li>
+						<li>Use test cards</li>
+						<li>SSL optional</li>
+						<li>Use test stripe connect application details</li>
+					</ul>
+
+				</section>
+
+				<section>
+					<h2>Going live</h2>
+					<ul>
+						<li>Use live publisable key</li>
+						<li>Use live secret</li>
+						<li>Use live cards</li>
+						<li>SSL mandatory</li>
+						<li>Use live stripe connect application details</li>
+					</ul>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				theme: 'default', // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
