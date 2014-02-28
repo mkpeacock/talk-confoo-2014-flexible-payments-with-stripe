@@ -56,10 +56,27 @@
 				<section>
 					<section>
 						<img src="images/logo.png" border="0px;">
+						<aside class="notes">
+							The online payment arena as been changing rapidly over the past year or two. Before, we were stuck with clunky, complex, unfriendly systems such as PayPal, WorldPay and the likes. Integrating them was difficult. Matching their payment options to your business case was often impossible, unless you were willing to pay additional monthly fees for this and that, as well as extra transaction fees. Recently, disruptive providers have came onto the scene to challenge that including stripe.
+						</aside>
+					</section>
+					<section>
+						<h2>Minimum workflow</h2>
+						<ul>
+							<li class="fragment">Customer provides card details</li>
+							<li class="fragment">Stripe returns a token</li>
+							<li class="fragment">Use the token to charge a card or save a customer</li>
+						</ul>
+						<aside class="notes">
+							Stripe is disruptive because it gives you total control over payment strategy, the payment page, and the user experience, while removing you of all PCI-DSS compliance issues. Javascript is used to send the details direct to stripe - all you ever see is a token. FRAGMENTS: customer provides card, stripe returns token, use token to charge card, or save customer.
+						</aside>
 					</section>
 					<section>
 						<h2>Costs</h2>
 						<img src="images/pricing.png" width="" height="">
+						<aside class="notes">
+							Pretty good value transaction fees. No need for a merchant bank account. So the stripe fees are it. If you charge in different currencies, there is a conversion fee, if you don't have an account in that currency.
+						</aside>
 					</section>
 					<section>
 						<h2>Payment strategies</h2>
@@ -70,6 +87,9 @@
 							<li class="fragment">Metered billing</li>
 							<li class="fragment">Seat/quantity based pricing</li>
 						</ul>
+						<aside class="notes">
+							Fragments: one off; on-demand; subscription; metered; seat/quantity based
+						</aside>
 					</section>
 					<section>
 						<h2>Other strategies</h2>
@@ -77,20 +97,18 @@
 							<li class="fragment">Stripe Connect</li>
 							<li class="fragment">Transfers</li>
 						</ul>
+						<aside class="notes">
+							- Stripe connect lets you send payments directly to other stripe users, you can charge a transaction fee on this too. Useful for online market places.<br />
+							- Transfers let you send money to a specific bank account (US stripe customers only for now :-()
+						</aside>
 					</section>
-					<section>
-						<h2>Minimum workflow</h2>
-						<ul>
-							<li class="fragment">Customer provides card details</li>
-							<li class="fragment">Stripe returns a token</li>
-							<li class="fragment">Use the token to charge a card or save a customer</li>
-						</ul>
-					</section>
+
 				</section>
 
 				<section>
 					<section>
 						<h2>Installation</h2>
+						<aside class="notes">To install; we need the PHP component, the Javascript library, and we need to set our API key</aside>
 					</section>
 					<section>
 						<h2>Composer.json</h2>
@@ -112,6 +130,9 @@
 				<section>
 					<section>
 						<h2>Getting a token</h2>
+						<aside class="notes">
+							There are two ways to get a stripe token. We can use Stripe checkout, for a stripe provided, payment collection page; or we can use StripeJS for our own hosted payment collection-page.
+						</aside>
 					</section>
 					<section>
 						<h2>Stripe Checkout</h2>
@@ -126,6 +147,9 @@
     data-amount="84500">
   &lt;/script>
 &lt;/form></code></pre>
+	<aside class="notes">
+		By including the stripe checkout javascript, this places a button on your site. Clicking that button presents the user with a stripe-provided modal window, which collects payment details. The data attributes let you customise the details of the charge, and even add a logo to the modal.
+	</aside>
 					</section>
 					<section>
 						<h2>Stripe.js</h2>
@@ -136,7 +160,9 @@
     exp_month: $('.card-expiry-month').val(),
     exp_year: $('.card-expiry-year').val()
 }, stripeResponseHandler);</code></pre>
-
+						<aside class="notes">
+							Stripe JS can be used to create a token from a self-hosted form, provided you disable the default form action with JavaScript. Two caveats; SSL is mandatory for production; and the form fields which relate to the credit card data for stripe cannot have a name attribute (this prevents them ever hitting your server, so you can avoid PCI-DSS woes)
+						</aside>
 					</section>
 
 					<section>
@@ -155,6 +181,9 @@
         form$.get(0).submit();
     }
 }</code></pre>
+	<aside class="notes">
+		A response handler function is needed to deal with errors and present them to the user, and on success to insert the token to the form, and submit the form.
+	</aside>
 					</section>
 				</section>
 
@@ -178,6 +207,7 @@
 					</section>
 
 					<section>
+						<h2>Exceptions to look out for</h2>
 						<pre><code contenteditable>\Stripe_CardError
 \Stripe_ApiConnectionError
 \Stripe_InvalidRequestError
@@ -191,6 +221,9 @@
 
 					<section>
 						<h2>On-demand payments</h2>
+						<aside class="notes">
+							Three steps: create a customer in stripe; associate the stripe customer ID with the customer record in your own system; charge the customer on demand.
+						</aside>
 					</section>
 
 					<section>
@@ -341,10 +374,6 @@ $customer->updateSubscription([
 					</section>
 
 					<section>
-
-					</section>
-
-					<section>
 						<pre><code contenteditable>$post_data = [
     'client_id' => urlencode($stripe_connect_client_id),
 	'client_secret' => urlencode($stripe_connect_client_secret),
@@ -454,7 +483,7 @@ $customer_stripe_access_token = $stripe_data['access_token']
 				<section>
 					<h2>Testing</h2>
 					<ul>
-						<li>Use test publisable key</li>
+						<li>Use test publishable key</li>
 						<li>Use test secret</li>
 						<li>Use test cards</li>
 						<li>SSL optional</li>
@@ -466,12 +495,19 @@ $customer_stripe_access_token = $stripe_data['access_token']
 				<section>
 					<h2>Going live</h2>
 					<ul>
-						<li>Use live publisable key</li>
+						<li>Use live publishable key</li>
 						<li>Use live secret</li>
 						<li>Use live cards</li>
 						<li>SSL mandatory</li>
 						<li>Use live stripe connect application details</li>
 					</ul>
+				</section>
+				<section>
+					<section>
+					<h1>Thanks!</h1>
+					<h3>@michaelpeacock<br />www.michaelpeacock.co.uk</h3>
+					<p>http://mkpeacock.github.io/talk-confoo-2014-flexible-payments-with-stripe</p>
+				</section>
 				</section>
 			</div>
 
@@ -501,6 +537,8 @@ $customer_stripe_access_token = $stripe_data['access_token']
 					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
 					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
 					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+					{ src: 'socket.io/socket.io.js', async: true },
+        			{ src: 'plugin/notes-server/client.js', async: true }
 					// { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
 				]
 			});
